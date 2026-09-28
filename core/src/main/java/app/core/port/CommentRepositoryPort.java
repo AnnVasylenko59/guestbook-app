@@ -3,10 +3,31 @@ package app.core.port;
 import app.core.domain.Comment;
 import app.core.domain.Page;
 import app.core.domain.PageRequest;
+
 import java.time.Instant;
 
 public interface CommentRepositoryPort {
-    void add(long bookId, String author, String text);
-    Page<Comment> list(long bookId, String author, Instant since, PageRequest request);
-    void delete(long bookId, long commentId);
+
+    void add(
+            long bookId,
+            String author,
+            String text
+    );
+
+    Page<Comment> list(
+            long bookId,
+            String author,
+            Instant since,
+            PageRequest request
+    );
+
+    Comment findById(
+            long bookId,
+            long commentId
+    );
+
+    void delete(
+            long bookId,
+            long commentId
+    );
 }

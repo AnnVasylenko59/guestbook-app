@@ -4,8 +4,6 @@ import app.core.domain.Book;
 import app.core.domain.Page;
 import app.core.domain.PageRequest;
 import app.core.port.CatalogRepositoryPort;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,31 +13,33 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 public class JdbcBookRepository implements CatalogRepositoryPort {
-    private static final Logger log = LoggerFactory.getLogger(JdbcBookRepository.class);
 
     @Override
     public Page<Book> search(String q, PageRequest request) {
         var items = new ArrayList<Book>();
-        long total = 0;
-        String sql = "select id, title, author, pub_year from books where 1=1";
+        StringBuilder sql = new StringBuilder("SELECT id, title, author, pub_year FROM books WHERE 1=1");
 
         if (q != null && !q.isBlank()) {
-            sql += " and (lower(title) like ? or lower(author) like ?)";
+            sql.append(" AND (LOWER(title) LIKE ? OR LOWER(author) LIKE ?)");
         }
-        sql += " order by id desc limit ? offset ?";
 
-        try (var c = Db.get();
-             var ps = c.prepareStatement(sql)) {
+        sql.append(" ORDER BY id DESC LIMIT ? OFFSET ?");
+
+        try (Connection c = Db.get();
+             PreparedStatement ps = c.prepareStatement(sql.toString())) {
+
             int i = 1;
+
             if (q != null && !q.isBlank()) {
-                String pattern = "%" + q.toLowerCase() + "%";
+                String pattern = "%" + q.trim().toLowerCase() + "%";
                 ps.setString(i++, pattern);
                 ps.setString(i++, pattern);
             }
-            ps.setInt(i++, request.getSize());
-            ps.setInt(i++, request.getPage() * request.getSize());
 
-            try (var rs = ps.executeQuery()) {
+            ps.setInt(i++, request.getSize());
+            ps.setInt(i, request.getPage() * request.getSize());
+
+            try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     items.add(new Book(
                             rs.getLong("id"),
@@ -50,26 +50,46 @@ public class JdbcBookRepository implements CatalogRepositoryPort {
                 }
             }
 
-            // Отримуємо загальну кількість для пагінації
-            try (var countPs = c.prepareStatement("select count(*) from books")) {
-                try (var rs = countPs.executeQuery()) {
-                    if (rs.next()) {
-                        total = rs.getLong(1);
-                    }
+            long total = countBooks(c, q);
+            return new Page<>(items, request, total);
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Database error while searching books", e);
+        }
+    }
+
+    private long countBooks(Connection c, String q) throws SQLException {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM books WHERE 1=1");
+
+        if (q != null && !q.isBlank()) {
+            sql.append(" AND (LOWER(title) LIKE ? OR LOWER(author) LIKE ?)");
+        }
+
+        try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
+            if (q != null && !q.isBlank()) {
+                String pattern = "%" + q.trim().toLowerCase() + "%";
+                ps.setString(1, pattern);
+                ps.setString(2, pattern);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
                 }
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("DB query error", e);
         }
-        return new Page<>(items, request, total);
+
+        return 0;
     }
 
     @Override
     public Book findById(long id) {
-        try (var c = Db.get();
-             var ps = c.prepareStatement("select id, title, author, pub_year from books where id=?")) {
+        try (Connection c = Db.get();
+             PreparedStatement ps = c.prepareStatement("SELECT id, title, author, pub_year FROM books WHERE id = ?")) {
+
             ps.setLong(1, id);
-            try (var rs = ps.executeQuery()) {
+
+            try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     return new Book(
                             rs.getLong("id"),
@@ -80,17 +100,19 @@ public class JdbcBookRepository implements CatalogRepositoryPort {
                 }
             }
             return null;
+
         } catch (SQLException e) {
-            throw new RuntimeException("DB query error", e);
+            throw new RuntimeException("Database error while finding book", e);
         }
     }
 
     @Override
     public Book add(String title, String author, int pubYear) {
+        String sql = "INSERT INTO books (title, author, pub_year) VALUES (?, ?, ?)";
+
         try (Connection c = Db.get();
-             PreparedStatement ps = c.prepareStatement(
-                     "INSERT INTO books (title, author, pub_year) VALUES (?,?,?)",
-                     Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement ps = c.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
             ps.setString(1, title);
             ps.setString(2, author);
             ps.setInt(3, pubYear);
@@ -102,9 +124,11 @@ public class JdbcBookRepository implements CatalogRepositoryPort {
                     return new Book(id, title, author, pubYear);
                 }
             }
-            throw new RuntimeException("Insert succeeded but no ID generated");
+
+            throw new RuntimeException("Book was inserted but ID was not generated");
+
         } catch (SQLException e) {
-            throw new RuntimeException("DB insert book failed", e);
+            throw new RuntimeException("Database error while adding book", e);
         }
     }
 }
