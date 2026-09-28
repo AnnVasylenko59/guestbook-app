@@ -5,7 +5,6 @@ import app.core.domain.Comment;
 import app.core.domain.PageRequest;
 import app.core.port.CatalogRepositoryPort;
 import app.core.port.CommentRepositoryPort;
-import app.config.Beans;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,8 +14,13 @@ import java.io.IOException;
 import java.util.List;
 
 public class CommentsServlet extends HttpServlet {
-    private final CatalogRepositoryPort bookRepo = Beans.getBookRepo();
-    private final CommentRepositoryPort commentRepo = Beans.getCommentRepo();
+    private final CatalogRepositoryPort bookRepo;
+    private final CommentRepositoryPort commentRepo;
+
+    public CommentsServlet(CatalogRepositoryPort bookRepo, CommentRepositoryPort commentRepo) {
+        this.bookRepo = bookRepo;
+        this.commentRepo = commentRepo;
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -48,7 +52,6 @@ public class CommentsServlet extends HttpServlet {
             throws IOException, ServletException {
         String method = req.getParameter("_method");
 
-        // Хак для обробки видалення з простої HTML-форми
         if ("delete".equalsIgnoreCase(method)) {
             long bookId = Long.parseLong(req.getParameter("bookId"));
             long commentId = Long.parseLong(req.getParameter("commentId"));

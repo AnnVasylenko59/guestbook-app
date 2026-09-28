@@ -3,7 +3,6 @@ package app.web;
 import app.core.domain.Book;
 import app.core.domain.PageRequest;
 import app.core.port.CatalogRepositoryPort;
-import app.config.Beans;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -13,7 +12,11 @@ import java.io.IOException;
 import java.util.List;
 
 public class BooksServlet extends HttpServlet {
-    private final CatalogRepositoryPort bookRepo = Beans.getBookRepo();
+    private final CatalogRepositoryPort bookRepo;
+
+    public BooksServlet(CatalogRepositoryPort bookRepo) {
+        this.bookRepo = bookRepo;
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

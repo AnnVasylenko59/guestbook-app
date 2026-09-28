@@ -1,9 +1,7 @@
 package app.web;
 
 import app.core.domain.Book;
-import app.core.domain.PageRequest;
-import app.core.port.CatalogRepositoryPort;
-import app.config.Beans;
+import app.core.service.BookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,8 +13,14 @@ import java.io.IOException;
 
 public class BooksApiServlet extends HttpServlet {
     private static final Logger log = LoggerFactory.getLogger(BooksApiServlet.class);
-    private final CatalogRepositoryPort bookRepo = Beans.getBookRepo();
+
+    private final BookService bookService;
     private final ObjectMapper om = new ObjectMapper();
+
+    // Оновлений конструктор, який очікує BookService
+    public BooksApiServlet(BookService bookService) {
+        this.bookService = bookService;
+    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -26,8 +30,8 @@ public class BooksApiServlet extends HttpServlet {
         String q = req.getParameter("q");
 
         try {
-            var result = bookRepo.search(q, new PageRequest(page, size));
-            om.writeValue(resp.getWriter(), result);
+            var books = bookService.findBooks(q, page, size);
+            om.writeValue(resp.getWriter(), books);
         } catch (Exception e) {
             log.error("DB error while GET /api/books", e);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "DB error");
@@ -48,7 +52,7 @@ public class BooksApiServlet extends HttpServlet {
                 resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "invalid pubYear");
                 return;
             }
-            Book saved = bookRepo.add(
+            Book saved = bookService.addBook(
                     book.getTitle().trim(),
                     book.getAuthor().trim(),
                     book.getPubYear()
