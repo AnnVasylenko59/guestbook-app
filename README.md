@@ -8,7 +8,7 @@
 
 *   **`core`** — доменний шар застосунку. Містить бізнес-моделі (`Book`, `Comment`), інтерфейси портів (`CatalogRepositoryPort`) та бізнес-сервіси (`BookService`). Цей модуль повністю ізольований і не має залежностей від Spring фреймворку.
 *   **`persistence`** — шар доступу до даних. Містить реалізацію репозиторіїв (`JdbcBookRepository`, `JdbcCommentRepository`) за допомогою технології JDBC та логіку ініціалізації бази даних.
-*   **`web`** — шар представлення та конфігурації. Містить залежності Spring Boot, головний клас `AppInit` із анотацією `@SpringBootApplication`, конфігурацію бінів (`ServletConfig`), сервлети (`BooksApiServlet`, `BooksServlet`) та сервіси (`AppStatsService`).
+* **`web`** — шар представлення та конфігурації. Містить залежності Spring Boot, головний клас `AppInit` із анотацією `@SpringBootApplication`, конфігурацію бінів (`ServletConfig`), сервлети (`BooksApiServlet`, `BooksController`) та сервіси (`AppStatsService`).
 
 ## 🚀 Основні реалізовані можливості (Spring Features)
 

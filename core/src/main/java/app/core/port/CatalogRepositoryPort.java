@@ -9,3 +9,4 @@ public interface CatalogRepositoryPort {
     Book findById(long id);
     Book add(String title, String author, int pubYear);
 }
+
