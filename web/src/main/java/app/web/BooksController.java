@@ -3,6 +3,8 @@ package app.web;
 import app.core.domain.Book;
 import app.core.domain.PageRequest;
 import app.core.port.CatalogRepositoryPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,10 +21,14 @@ import java.util.List;
 @RequestMapping("/books")
 public class BooksController {
 
-    private final CatalogRepositoryPort bookRepo;
+    private static final Logger log = LoggerFactory.getLogger(BooksController.class);
 
-    public BooksController(CatalogRepositoryPort bookRepo) {
+    private final CatalogRepositoryPort bookRepo;
+    private final MailService mailService;
+
+    public BooksController(CatalogRepositoryPort bookRepo, MailService mailService) {
         this.bookRepo = bookRepo;
+        this.mailService = mailService;
     }
 
     @GetMapping
@@ -41,7 +47,6 @@ public class BooksController {
 
     @PostMapping("/add")
     public String addBook(@ModelAttribute("book") Book book, BindingResult result) {
-        // typeMismatch (нечислове значення року) уже лежить у result
         if (book.getTitle() == null || book.getTitle().isBlank()) {
             result.rejectValue("title", "book.title.required");
         }
@@ -56,8 +61,14 @@ public class BooksController {
             return "book-form";
         }
 
-        // !!! Підставте свій метод збереження з CatalogRepositoryPort / BookService
-        bookRepo.add(book.getTitle().trim(), book.getAuthor().trim(), book.getPubYear());
+        Book saved = bookRepo.add(book.getTitle().trim(), book.getAuthor().trim(), book.getPubYear());
+
+        try {
+            mailService.sendNewBookEmail(saved);
+        } catch (RuntimeException e) {
+            // книга вже збережена; збій SMTP не має ламати форму
+            log.error("Не вдалося надіслати лист про нову книгу", e);
+        }
 
         return "redirect:/books";
     }

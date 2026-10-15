@@ -1,52 +1,69 @@
-# Лабораторна робота №4 - Spring Core & Boot
+# Лабораторна робота №7: Шаблонізація у Spring MVC з використанням FreeMarker та формування HTML-листів (Gmail SMTP)
 
-Цей проєкт є багатомодульним вебзастосунком для ведення каталогу книг (Guestbook), переведеним на використання фреймворку **Spring Boot**. Основна мета поточної версії — практична реалізація принципів **Inversion of Control (IoC)** та **Dependency Injection (DI)**, а також налаштування автоконфігурації Spring.
+## 📌 Мета роботи
+Ознайомитися з принципами серверної шаблонізації у Spring MVC на основі шаблонізатора FreeMarker. Навчитися створювати динамічні HTML-шаблони для веб-сторінок та e-mail повідомлень, використовувати змінні, колекції, умовні конструкції та підключати зовнішні ресурси. Освоїти інтеграцію Spring Boot із SMTP Gmail, створення HTML-листів через FreeMarker та надсилання їх через сервіс `JavaMailSender`.
 
-## 🏗 Структура проєкту
+---
 
-Проєкт побудовано за принципами чистої архітектури і розділено на три незалежні Maven-модулі:
+## 🛠 Технології та стек
+* **Java 21**
+* **Spring Boot / Spring MVC 3.3.4**
+* **FreeMarker** (серверний шаблонізатор для листів)
+* **Thymeleaf** (шаблонізатор для веб-інтерфейсу)
+* **Spring Mail (`JavaMailSender` & `jakarta.mail`)**
+* **Gmail SMTP (App Password)**
+* **Maven** (багатомодульний проєкт: `core`, `persistence`, `web`)
 
-*   **`core`** — доменний шар застосунку. Містить бізнес-моделі (`Book`, `Comment`), інтерфейси портів (`CatalogRepositoryPort`) та бізнес-сервіси (`BookService`). Цей модуль повністю ізольований і не має залежностей від Spring фреймворку.
-*   **`persistence`** — шар доступу до даних. Містить реалізацію репозиторіїв (`JdbcBookRepository`, `JdbcCommentRepository`) за допомогою технології JDBC та логіку ініціалізації бази даних.
-* **`web`** — шар представлення та конфігурації. Містить залежності Spring Boot, головний клас `AppInit` із анотацією `@SpringBootApplication`, конфігурацію бінів (`ServletConfig`), сервлети (`BooksApiServlet`, `BooksController`) та сервіси (`AppStatsService`).
+---
 
-## 🚀 Основні реалізовані можливості (Spring Features)
+## 📂 Структура проєкту
+Архітектура побудована за принципами чистої архітектури та поділена на три Maven-модулі. Зміни цієї лабораторної роботи зосереджені у модулі `web`:
 
-1.  **Автоконфігурація Spring Boot:** Застосунок піднімається як Standalone-застосунок із вбудованим сервером **Tomcat** на порті 8080.
-2.  **Inversion of Control (IoC):** Усі ключові об'єкти (репозиторії, сервіси, сервлети) керуються Spring Контекстом.
-3.  **Dependency Injection (DI):** 
-    *   **Constructor Injection:** Основний спосіб передачі залежностей у бізнес-сервіси (`BookService`) та сервлети.
-    *   **Field Injection:** Реалізовано за допомогою анотації `@Autowired` для ін'єкції залежностей безпосередньо в поля класу (продемонстровано в `AppStatsService`).
-4.  **Кастомна конфігурація бінів:** Реєстрація сторонніх класів та репозиторіїв реалізована через клас `ServletConfig` за допомогою анотацій `@Configuration` та `@Bean`.
-5.  **Externalized Configuration:** Власні налаштування застосунку (наприклад, `app.catalog.default-page-size`, `app.catalog.welcome-banner`) винесено у файл `application.properties` та зчитуються через анотацію `@Value`.
+| Модуль | Призначення | Зміни в ЛР №7 |
+| :--- | :--- | :--- |
+| **`core`** | Бізнес-логіка, доменні моделі (`Book`), порти та сервіси. | *Без змін* |
+| **`persistence`** | JDBC-реалізація репозиторіїв та робота з БД. | *Без змін* |
+| **`web`** | Контролери, конфігурація та веб-інтерфейс. | Додано FreeMarker, SMTP Gmail, `EmailFreemarkerConfig`, `EmailTemplateProcessor`, `MailService` та шаблон листа `new_book.ftl`. |
 
-## 🛠 Стек технологій
+---
 
-*   **Мова:** Java 17 / 21
-*   **Фреймворк:** Spring Boot 3.3.4 (Spring Web)
-*   **Збірка:** Apache Maven
-*   **Сервер:** Embedded Apache Tomcat 10
-*   **Представлення:** Jakarta Servlets, JSP, JSTL
-*   **Формат обміну даними:** JSON (Jackson)
+## 🚀 Виконані завдання та розширення (+20%)
 
-## ⚙️ Запуск застосунку
+1. **Підготовка середовища та конфігурація SMTP:**
+    * Додано залежності `spring-boot-starter-freemarker` та `spring-boot-starter-mail` у файл `web/pom.xml`.
+    * Налаштовано підключення до Gmail SMTP через `App Password` у `application.properties`:
+      ```properties
+      spring.mail.host=smtp.gmail.com
+      spring.mail.port=587
+      spring.mail.username=${MAIL_USERNAME}
+      spring.mail.password=${MAIL_PASSWORD}
+      spring.mail.properties.mail.smtp.auth=true
+      spring.mail.properties.mail.smtp.starttls.enable=true
+      spring.mail.default-encoding=UTF-8
+      ```
 
-### Спосіб 1: Через IDE (IntelliJ IDEA)
-1. Відкрийте проєкт у вашій IDE.
-2. Знайдіть файл `AppInit.java` за шляхом `web/src/main/java/app/config/AppInit.java`.
-3. Запустіть метод `main()` за допомогою зеленої стрілки **Run**.
+2. **Конфігурація FreeMarker для листів:**
+    * Створено клас **`EmailFreemarkerConfig`**, який налаштовує окремий конфіг завантаження шаблонів виключно з каталогу `classpath:/mail-templates/`, ізолюючи їх від Thymeleaf.
 
-### Спосіб 2: Через термінал (Maven)
-Виконайте збірку проєкту в кореневій директорії, після чого запустіть модуль `web` за допомогою Spring Boot плагіна:
+3. **Створення HTML-шаблону листа (`new_book.ftl`):**
+    * Розроблено стилізований HTML-шаблон листа із застосуванням inline-CSS.
+    * Використано динамічні змінні (`${title}`, `${author}`, `${year}`, `${added}`).
+    * **Розширення (+20%):**
+        * Інтегровано логотип застосунку через raw-URL з GitHub (`<img src="https://raw.githubusercontent.com/.../logo.png">`).
+        * Додано кастомний футер із поточним роком (`BookApp © 2026`).
+        * Реалізовано умовний блок для виділення раритетних видань (`<#if year < 2000>`).
+        * Налаштовано форматування дати додавання (`yyyy-MM-dd HH:mm`).
 
-```powershell
-mvn clean install
-cd web
-mvn spring-boot:run
-```
+4. **Сервісна логіка розсилки:**
+    * Створено **`EmailTemplateProcessor`** для рендерингу шаблонів FreeMarker у стрічку HTML.
+    * Реалізовано **`MailService`**, який формує `MimeMessage` та безпечно надсилає лист через `JavaMailSender` (із блоком `try-catch`, щоб збій поштового сервера не переривав процес збереження книги).
 
-## 📡 Доступні ендпоінти
-Після успішного запуску, сервер буде доступний за адресою `http://localhost:8080/`.
-* **Каталог книг (UI):** `GET /books` — відкриває JSP-сторінку з каталогом книг.
-* **REST API для книг:** `GET /api/books/` — повертає список книг у форматі JSON. Підтримує параметри пагінації (?page=0&size=10).
-* **Додавання книги (API):** `POST /api/books/` — приймає JSON із даними нової книги (title, author, pubYear) та зберігає її в базу даних.
+5. **Інтеграція у контролер:**
+    * Оновлено метод POST-запиту в `BooksController`, який після успішного збереження нової книги викликає `mailService.sendNewBookEmail(book)`.
+
+---
+
+## 🖥 Перевірка роботи
+1. **Перегляд каталогу:** `http://localhost:8080/books`
+2. **Додавання нової книги (з тригером відправки листа):** `http://localhost:8080/books/new`
+3. **Перевірка пошти:** У поштовій скриньці (Gmail) з'являється стилізований HTML-лист про успішне додавання книги.
