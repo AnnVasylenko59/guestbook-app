@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/head :: head(#{books.title})}"></head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="container">
+
+    <section class="hero">
+        <div>
+            <p class="eyebrow" th:text="#{books.eyebrow}">YOUR PERSONAL LIBRARY</p>
+            <h1 th:text="#{books.title}">Каталог книг</h1>
+            <p class="hero-text" th:text="#{books.subtitle}">...</p>
+        </div>
+    </section>
+
+    <section class="toolbar">
+        <form method="get" th:action="@{/books}" class="search-form">
+            <input type="text" name="q" th:value="${q}"
+                   th:placeholder="#{books.search.placeholder}" class="input">
+            <button type="submit" class="button button-primary" th:text="#{books.search.button}">Знайти</button>
+            <a th:href="@{/books/add}" class="button button-secondary" th:text="#{nav.add}">Додати книгу</a>
+        </form>
+    </section>
+
+    <section class="section">
+        <div class="section-header">
+            <div>
+                <h2 th:text="#{books.section}">Книги</h2>
+                <p class="muted" th:text="#{books.section.hint}">...</p>
+            </div>
+            <span class="count" th:text="#{books.count(${#lists.size(books)})}">0 книг</span>
+        </div>
+
+        <!-- Порожня колекція -->
+        <div class="empty-state" th:if="${#lists.isEmpty(books)}">
+            <div class="empty-icon">📖</div>
+            <h3 th:text="#{books.empty.title}">Книг поки немає</h3>
+            <p th:text="#{books.empty.text}">Додай першу книгу до свого каталогу.</p>
+        </div>
+
+        <!-- Непорожня колекція -->
+        <div class="book-grid" th:unless="${#lists.isEmpty(books)}">
+            <article class="book-card" th:each="book : ${books}">
+                <div class="book-cover">📚</div>
+                <div class="book-content">
+                    <h3 class="book-title" th:text="${book.title}">Title</h3>
+                    <p class="book-author" th:text="${book.author}">Author</p>
+                    <p class="book-year" th:text="${book.pubYear}">2000</p>
+                    <a th:href="@{/comments(bookId=${book.id})}"
+                       class="button button-secondary button-full" th:text="#{books.comments}">Коментарі</a>
+                </div>
+            </article>
+        </div>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

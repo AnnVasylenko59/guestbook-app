@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/head :: head(#{form.add})}"></head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="container">
+    <section class="comment-form-card form-card">
+        <h1 th:text="#{form.add}">Додати книгу</h1>
+        <p class="muted" th:text="#{form.add.subtitle}">...</p>
+
+        <form method="post" th:action="@{/books/add}" th:object="${book}" class="comment-form">
+
+            <label for="title" th:text="#{form.title}">Назва</label>
+            <input id="title" type="text" class="input" maxlength="200" th:field="*{title}">
+            <p class="field-error" th:if="${#fields.hasErrors('title')}" th:errors="*{title}">error</p>
+
+            <label for="author" th:text="#{form.author}">Автор</label>
+            <input id="author" type="text" class="input" maxlength="200" th:field="*{author}">
+            <p class="field-error" th:if="${#fields.hasErrors('author')}" th:errors="*{author}">error</p>
+
+            <label for="pubYear" th:text="#{form.pubYear}">Рік видання</label>
+            <input id="pubYear" type="number" class="input" th:field="*{pubYear}">
+            <p class="field-error" th:if="${#fields.hasErrors('pubYear')}" th:errors="*{pubYear}">error</p>
+
+            <button type="submit" class="button button-primary button-full" th:text="#{form.submit}">Зберегти</button>
+            <a th:href="@{/books}" class="button button-secondary button-full" th:text="#{form.cancel}">Скасувати</a>
+        </form>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

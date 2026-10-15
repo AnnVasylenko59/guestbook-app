@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="header" th:fragment="header">
+    <div class="container header-inner">
+        <a class="logo" th:href="@{/books}">📚 <span th:text="#{app.name}">BookShelf</span></a>
+
+        <nav class="nav">
+            <a class="nav-link" th:href="@{/books}" th:text="#{nav.catalog}">Каталог</a>
+            <a class="nav-link" th:href="@{/books/add}" th:text="#{nav.add}">Додати книгу</a>
+            <a class="nav-link" th:href="${langBase + 'lang=uk'}" th:text="#{lang.uk}">UA</a>
+            <a class="nav-link" th:href="${langBase + 'lang=en'}" th:text="#{lang.en}">EN</a>
+        </nav>
+    </div>
+</header>
+</body>
+</html>

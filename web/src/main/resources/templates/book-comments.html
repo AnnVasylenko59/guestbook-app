@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org" th:lang="${#locale.language}">
+<head th:replace="~{fragments/head :: head(${book.title})}"></head>
+<body>
+
+<header th:replace="~{fragments/header :: header}"></header>
+
+<main class="container">
+
+    <section class="book-hero">
+        <a class="back-link" th:href="@{/books}" th:text="#{comments.back}">← Назад до каталогу</a>
+
+        <div class="book-detail">
+            <div class="book-detail-cover">📚</div>
+            <div class="book-detail-info">
+                <p class="eyebrow" th:text="#{comments.details}">BOOK DETAILS</p>
+                <h1 th:text="${book.title}">Title</h1>
+                <p class="detail-author" th:text="${book.author}">Author</p>
+                <span class="year-badge" th:text="${book.pubYear}">2000</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="comments-layout">
+
+        <div class="comments-main">
+            <div class="section-header">
+                <div>
+                    <h2 th:text="#{comments.title}">Коментарі</h2>
+                    <p class="muted" th:text="#{comments.hint}">...</p>
+                </div>
+                <span class="count" th:text="#{comments.count(${#lists.size(comments)})}">0</span>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(comments)}">
+                <div class="empty-icon">💬</div>
+                <h3 th:text="#{comments.empty.title}">Коментарів ще немає</h3>
+                <p th:text="#{comments.empty.text}">Будь першим.</p>
+            </div>
+
+            <div class="comments-list" th:unless="${#lists.isEmpty(comments)}">
+                <article class="comment-card" th:each="comment : ${comments}">
+                    <div class="comment-header">
+                        <div class="comment-avatar"
+                             th:text="${#strings.toUpperCase(#strings.substring(comment.author, 0, 1))}">A</div>
+                        <div>
+                            <strong th:text="${comment.author}">Author</strong>
+                            <span class="comment-date" th:text="${comment.createdAt}">date</span>
+                        </div>
+                    </div>
+
+                    <p class="comment-text" th:text="${comment.text}">text</p>
+
+                    <form method="post" th:action="@{/comments}" class="delete-form">
+                        <input type="hidden" name="_method" value="delete">
+                        <input type="hidden" name="bookId" th:value="${book.id}">
+                        <input type="hidden" name="commentId" th:value="${comment.id}">
+                        <button type="submit" class="delete-button" th:text="#{comments.delete}"
+                                th:attr="data-confirm=#{comments.delete.confirm}"
+                                onclick="return confirm(this.dataset.confirm);">Видалити</button>
+                    </form>
+                </article>
+            </div>
+        </div>
+
+        <aside class="comment-form-card">
+            <h2 th:text="#{comments.form.title}">Залишити коментар</h2>
+            <p class="muted" th:text="#{comments.form.hint}">...</p>
+
+            <form method="post" th:action="@{/comments}" class="comment-form">
+                <input type="hidden" name="bookId" th:value="${book.id}">
+
+                <label for="author" th:text="#{comments.form.name}">Ім'я</label>
+                <input id="author" name="author" type="text" class="input" maxlength="64" required
+                       th:placeholder="#{comments.form.name.placeholder}">
+
+                <label for="text" th:text="#{comments.form.text}">Коментар</label>
+                <textarea id="text" name="text" class="textarea" maxlength="1000" rows="6" required
+                          th:placeholder="#{comments.form.text.placeholder}"></textarea>
+
+                <button type="submit" class="button button-primary button-full"
+                        th:text="#{comments.form.submit}">Опублікувати</button>
+            </form>
+        </aside>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>
